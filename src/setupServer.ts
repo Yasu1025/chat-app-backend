@@ -9,6 +9,7 @@ import compression from "compression";
 import "express-async-errors";
 
 const SERVER_PORT = 6000;
+
 export class AppServer {
   private app: Application;
 
@@ -56,6 +57,7 @@ export class AppServer {
     app.use(urlencoded({ extended: true, limit: limitMB }));
   }
 
+  // TODO
   private routesMiddleware(app: Application): void {}
   private globalErrorHandler(app: Application): void {}
 
@@ -68,7 +70,9 @@ export class AppServer {
     }
   }
 
+  // TODO
   private createSocketIO(httpServer: http.Server): void {}
+
   private startHttpServer(httpServer: http.Server): void {
     httpServer.listen(SERVER_PORT, () => {
       console.log(`Server running on port ${SERVER_PORT}`);
