@@ -7,6 +7,7 @@ import cookieSession from "cookie-session";
 import HTTP_STATUS from "http-status-codes";
 import compression from "compression";
 import "express-async-errors";
+import { config } from "./config";
 
 const SERVER_PORT = 6000;
 
@@ -32,9 +33,9 @@ export class AppServer {
     app.use(
       cookieSession({
         name: "session",
-        keys: ["test1", "test2"], // TODO: change later
+        keys: [config.SECRET_KEY_ONE!, config.SECRET_KEY_TWO!],
         maxAge: 24 * 7 * 3600000, // 7 days
-        secure: false, // TODO: change later
+        secure: config.NODE_ENV !== "development",
       })
     );
 
@@ -42,7 +43,7 @@ export class AppServer {
     app.use(helmet()); // Security header
     app.use(
       cors({
-        origin: "*", // TODO: change later
+        origin: config.CLIENT_URL,
         credentials: true, // caz we use cookie
         optionsSuccessStatus: 200,
         methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
