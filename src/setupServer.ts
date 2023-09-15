@@ -1,4 +1,15 @@
-import { Application, json, urlencoded } from "express";
+import {
+  CustomError,
+  IErrorResponse,
+} from "./shared/globals/helpers/error-handler";
+import {
+  Application,
+  json,
+  NextFunction,
+  Request,
+  Response,
+  urlencoded,
+} from "express";
 import http from "http";
 import cors from "cors";
 import helmet from "helmet";
@@ -67,7 +78,29 @@ export class AppServer {
     ApplicationRoutes(app);
   }
 
-  private globalErrorHandler(app: Application): void {}
+  private globalErrorHandler(app: Application): void {
+    app.all("*", (req: Request, res: Response) => {
+      res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json({ message: `${req.originalUrl} not found` });
+    });
+
+    app.use(
+      (
+        error: IErrorResponse,
+        _req: Request,
+        res: Response,
+        next: NextFunction
+      ) => {
+        console.log(`Error: ${error}`);
+        if (error instanceof CustomError) {
+          return res.status(error.statusCode).json(error.serializeErrors());
+        }
+        // no error
+        next();
+      }
+    );
+  }
 
   private async startServer(app: Application): Promise<void> {
     try {
