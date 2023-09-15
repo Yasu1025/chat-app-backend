@@ -12,6 +12,7 @@ import { Server } from "socket.io";
 import { createClient } from "redis";
 import { connect } from "mongoose";
 import { createAdapter } from "@socket.io/redis-adapter";
+import ApplicationRoutes from "./routes";
 
 const SERVER_PORT = 6000;
 
@@ -62,8 +63,10 @@ export class AppServer {
     app.use(urlencoded({ extended: true, limit: limitMB }));
   }
 
-  // TODO
-  private routesMiddleware(app: Application): void {}
+  private routesMiddleware(app: Application): void {
+    ApplicationRoutes(app);
+  }
+
   private globalErrorHandler(app: Application): void {}
 
   private async startServer(app: Application): Promise<void> {
