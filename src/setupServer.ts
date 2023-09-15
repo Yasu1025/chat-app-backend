@@ -24,8 +24,10 @@ import { createClient } from "redis";
 import { connect } from "mongoose";
 import { createAdapter } from "@socket.io/redis-adapter";
 import ApplicationRoutes from "./routes";
+import Logger from "bunyan";
 
 const SERVER_PORT = 6000;
+const log: Logger = config.createLogger("server");
 
 export class AppServer {
   private app: Application;
@@ -92,7 +94,7 @@ export class AppServer {
         res: Response,
         next: NextFunction
       ) => {
-        console.log(`Error: ${error}`);
+        log.error(`Error: ${error}`);
         if (error instanceof CustomError) {
           return res.status(error.statusCode).json(error.serializeErrors());
         }
@@ -109,7 +111,7 @@ export class AppServer {
       this.startHttpServer(httpServer);
       this.socketIOConnection(socketIO);
     } catch (error) {
-      console.log(error);
+      log.error(error);
     }
   }
 
@@ -128,9 +130,9 @@ export class AppServer {
   }
 
   private startHttpServer(httpServer: http.Server): void {
-    console.log(`Server has started with process ${process.pid}`);
+    log.info(`Server has started with process ${process.pid}`);
     httpServer.listen(SERVER_PORT, () => {
-      console.log(`Server running on port ${SERVER_PORT}`);
+      log.info(`Server running on port ${SERVER_PORT}`);
     });
   }
 
