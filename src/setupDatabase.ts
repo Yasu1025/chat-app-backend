@@ -1,23 +1,23 @@
-import Logger from "bunyan";
-import mongoose from "mongoose";
-import { config } from "./config";
+import Logger from 'bunyan';
+import mongoose from 'mongoose';
+import { config } from './config';
 
-const log: Logger = config.createLogger("Setup DB");
+const log: Logger = config.createLogger('Setup DB');
 
 export default () => {
   const connect = () => {
-    log.info("connecting to DB....");
+    log.info('connecting to DB....');
     mongoose
       .connect(`${config.DATABASE_URL}`)
       .then(() => {
-        log.info("succesefully connected to DB");
+        log.info('succesefully connected to DB');
       })
       .catch((error) => {
-        log.error("ERROR: Connected to DB", error);
+        log.error('ERROR: Connected to DB', error);
         return process.exit(1);
       });
   };
   connect();
 
-  mongoose.connection.on("Disconnected", connect);
+  mongoose.connection.on('Disconnected', connect);
 };

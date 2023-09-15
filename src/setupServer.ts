@@ -1,33 +1,23 @@
-import {
-  CustomError,
-  IErrorResponse,
-} from "./shared/globals/helpers/error-handler";
-import {
-  Application,
-  json,
-  NextFunction,
-  Request,
-  Response,
-  urlencoded,
-} from "express";
-import http from "http";
-import cors from "cors";
-import helmet from "helmet";
-import hpp from "hpp";
-import cookieSession from "cookie-session";
-import HTTP_STATUS from "http-status-codes";
-import compression from "compression";
-import "express-async-errors";
-import { config } from "./config";
-import { Server } from "socket.io";
-import { createClient } from "redis";
-import { connect } from "mongoose";
-import { createAdapter } from "@socket.io/redis-adapter";
-import ApplicationRoutes from "./routes";
-import Logger from "bunyan";
+import { CustomError, IErrorResponse } from './shared/globals/helpers/error-handler';
+import { Application, json, NextFunction, Request, Response, urlencoded } from 'express';
+import http from 'http';
+import cors from 'cors';
+import helmet from 'helmet';
+import hpp from 'hpp';
+import cookieSession from 'cookie-session';
+import HTTP_STATUS from 'http-status-codes';
+import compression from 'compression';
+import 'express-async-errors';
+import { config } from './config';
+import { Server } from 'socket.io';
+import { createClient } from 'redis';
+// import { connect } from 'mongoose';
+import { createAdapter } from '@socket.io/redis-adapter';
+import ApplicationRoutes from './routes';
+import Logger from 'bunyan';
 
 const SERVER_PORT = 6000;
-const log: Logger = config.createLogger("server");
+const log: Logger = config.createLogger('server');
 
 export class AppServer {
   private app: Application;
@@ -50,10 +40,10 @@ export class AppServer {
   private securityMiddleware(app: Application): void {
     app.use(
       cookieSession({
-        name: "session",
+        name: 'session',
         keys: [config.SECRET_KEY_ONE!, config.SECRET_KEY_TWO!],
         maxAge: 24 * 7 * 3600000, // 7 days
-        secure: config.NODE_ENV !== "development",
+        secure: config.NODE_ENV !== 'development',
       })
     );
 
@@ -64,13 +54,13 @@ export class AppServer {
         origin: config.CLIENT_URL,
         credentials: true, // caz we use cookie
         optionsSuccessStatus: 200,
-        methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
       })
     );
   }
 
   private standardMiddleware(app: Application): void {
-    const limitMB = "50mb";
+    const limitMB = '50mb';
     app.use(compression()); // to help compress our req
     app.use(json({ limit: limitMB }));
     app.use(urlencoded({ extended: true, limit: limitMB }));
@@ -81,27 +71,18 @@ export class AppServer {
   }
 
   private globalErrorHandler(app: Application): void {
-    app.all("*", (req: Request, res: Response) => {
-      res
-        .status(HTTP_STATUS.NOT_FOUND)
-        .json({ message: `${req.originalUrl} not found` });
+    app.all('*', (req: Request, res: Response) => {
+      res.status(HTTP_STATUS.NOT_FOUND).json({ message: `${req.originalUrl} not found` });
     });
 
-    app.use(
-      (
-        error: IErrorResponse,
-        _req: Request,
-        res: Response,
-        next: NextFunction
-      ) => {
-        log.error(`Error: ${error}`);
-        if (error instanceof CustomError) {
-          return res.status(error.statusCode).json(error.serializeErrors());
-        }
-        // no error
-        next();
+    app.use((error: IErrorResponse, _req: Request, res: Response, next: NextFunction) => {
+      log.error(`Error: ${error}`);
+      if (error instanceof CustomError) {
+        return res.status(error.statusCode).json(error.serializeErrors());
       }
-    );
+      // no error
+      next();
+    });
   }
 
   private async startServer(app: Application): Promise<void> {
@@ -119,7 +100,7 @@ export class AppServer {
     const io: Server = new Server(httpServer, {
       cors: {
         origin: config.CLIENT_URL,
-        methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
       },
     });
     const pubClient = createClient({ url: config.REDIS_HOST });
