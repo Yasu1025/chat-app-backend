@@ -1,4 +1,4 @@
-import { CustomError, IErrorResponse } from './shared/globals/helpers/error-handler';
+import { CustomError, IErrorResponse } from '@global/helpers/error-handler';
 import { Application, json, NextFunction, Request, Response, urlencoded } from 'express';
 import http from 'http';
 import cors from 'cors';
@@ -8,12 +8,12 @@ import cookieSession from 'cookie-session';
 import HTTP_STATUS from 'http-status-codes';
 import compression from 'compression';
 import 'express-async-errors';
-import { config } from './config';
+import { config } from '@root/config';
 import { Server } from 'socket.io';
 import { createClient } from 'redis';
 // import { connect } from 'mongoose';
 import { createAdapter } from '@socket.io/redis-adapter';
-import ApplicationRoutes from './routes';
+import ApplicationRoutes from '@root/routes';
 import Logger from 'bunyan';
 
 const SERVER_PORT = 6000;
@@ -117,5 +117,7 @@ export class AppServer {
     });
   }
 
-  private socketIOConnection(io: Server): void {}
+  private socketIOConnection(io: Server): void {
+    log.info(`socketIOConnection`);
+  }
 }

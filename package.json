@@ -26,7 +26,9 @@
     "mongoose": "^7.5.0",
     "redis": "^4.6.8",
     "socket.io": "^4.7.2",
-    "typescript": "^4.9.5"
+    "ttypescript": "^1.5.15",
+    "typescript": "^4.9.5",
+    "typescript-transform-paths": "^3.4.6"
   },
   "devDependencies": {
     "@types/bunyan": "^1.8.8",

@@ -1,6 +1,6 @@
 import Logger from 'bunyan';
 import mongoose from 'mongoose';
-import { config } from './config';
+import { config } from '@root/config';
 
 const log: Logger = config.createLogger('Setup DB');
 
@@ -12,7 +12,7 @@ export default () => {
       .then(() => {
         log.info('succesefully connected to DB');
       })
-      .catch((error) => {
+      .catch(error => {
         log.error('ERROR: Connected to DB', error);
         return process.exit(1);
       });
