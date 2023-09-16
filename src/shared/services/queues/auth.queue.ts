@@ -1,9 +1,11 @@
+import { authWorker } from '../../workers/auth.worker';
 import { IAuthJob } from '@auth/interfaces/auth.interface';
 import { BaseQueue } from './base.queue';
 
-export class AuthQueu extends BaseQueue {
+export class AuthQueue extends BaseQueue {
   constructor() {
     super('auth');
+    this.processJob('addAuthUserJobToDB', 5, authWorker.addAuthUserToDB);
   }
 
   public addAuthUserJob(name: string, data: IAuthJob): void {
@@ -11,4 +13,4 @@ export class AuthQueu extends BaseQueue {
   }
 }
 
-export const authQueu: AuthQueu = new AuthQueu();
+export const authQueue: AuthQueue = new AuthQueue();

@@ -1,4 +1,4 @@
-import { authQueu } from './../../../shared/services/queues/auth.queu';
+import { authQueue } from '../../../shared/services/queues/auth.queue';
 import { IUserDocument } from '@user/interfaces/user.interface';
 import HTTP_STATUS from 'http-status-codes';
 import { IAuthDocument, ISignUpData } from '@auth/interfaces/auth.interface';
@@ -14,6 +14,7 @@ import { ObjectId } from 'mongodb';
 import { UserCache } from '@service/redis/user.cache';
 import { config } from '@root/config';
 import { omit } from 'lodash';
+import { userQueue } from '@service/queues/user.queue';
 
 const userCache: UserCache = new UserCache();
 export class Signup {
@@ -101,7 +102,8 @@ export class Signup {
 
     // Add cached to DB
     omit(userDateCache, ['uid', 'username', 'email', 'avatarColor', 'password']);
-    authQueu.addAuthUserJob('addAuthUserJobToDB', { value: userDateCache });
+    authQueue.addAuthUserJob('addAuthUserJobToDB', { value: userDateCache }); // save to /Auth
+    userQueue.addUserJob('addUserJobToDB', { value: userDateCache }); // save to /User
 
     res.status(HTTP_STATUS.CREATED).json({ message: 'User created successfully', authData });
   }
