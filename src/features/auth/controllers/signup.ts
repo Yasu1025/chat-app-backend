@@ -97,6 +97,8 @@ export class Signup {
     userDateCache.profilePicture = `https://res.cloudinary.com/${config.CLOUD_NAME}/image/upload/v${result.version}/${userObjectId}`;
     await userCache.saveUserToCached(`${userObjectId}`, uId, userDateCache);
 
+    // TODO: add to DB
+
     res.status(HTTP_STATUS.CREATED).json({ message: 'User created successfully', authData });
   }
 }
