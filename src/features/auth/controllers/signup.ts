@@ -1,3 +1,4 @@
+import { authQueu } from './../../../shared/services/queues/auth.queu';
 import { IUserDocument } from '@user/interfaces/user.interface';
 import HTTP_STATUS from 'http-status-codes';
 import { IAuthDocument, ISignUpData } from '@auth/interfaces/auth.interface';
@@ -12,6 +13,7 @@ import { Request, Response } from 'express';
 import { ObjectId } from 'mongodb';
 import { UserCache } from '@service/redis/user.cache';
 import { config } from '@root/config';
+import { omit } from 'lodash';
 
 const userCache: UserCache = new UserCache();
 export class Signup {
@@ -97,7 +99,9 @@ export class Signup {
     userDateCache.profilePicture = `https://res.cloudinary.com/${config.CLOUD_NAME}/image/upload/v${result.version}/${userObjectId}`;
     await userCache.saveUserToCached(`${userObjectId}`, uId, userDateCache);
 
-    // TODO: add to DB
+    // Add cached to DB
+    omit(userDateCache, ['uid', 'username', 'email', 'avatarColor', 'password']);
+    authQueu.addAuthUserJob('addAuthUserJobToDB', { value: userDateCache });
 
     res.status(HTTP_STATUS.CREATED).json({ message: 'User created successfully', authData });
   }
