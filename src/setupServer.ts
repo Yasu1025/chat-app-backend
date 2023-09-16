@@ -118,6 +118,6 @@ export class AppServer {
   }
 
   private socketIOConnection(io: Server): void {
-    log.info(`socketIOConnection`);
+    log.info(`socketIOConnection: ${io}`); // TODO: delete
   }
 }

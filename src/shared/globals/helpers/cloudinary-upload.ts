@@ -6,6 +6,7 @@ export const upload = async (
   overwrite?: boolean,
   invalidate?: boolean
 ): Promise<UploadApiResponse | UploadApiErrorResponse | undefined> => {
+  // save to https://res.cloudinary.com/hogehoge/public_id/....
   return new Promise(resolve => {
     cloudinary.v2.uploader.upload(
       file,
