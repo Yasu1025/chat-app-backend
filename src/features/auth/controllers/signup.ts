@@ -71,7 +71,7 @@ export class Signup {
     const { username, email, password, avatarColor, avatarImage } = req.body;
     const checkUserExist: IAuthDocument = await authService.getUserByUsernameOrEmail(username, email);
     if (checkUserExist) {
-      throw new BadRequestError('Invalid credencials');
+      throw new BadRequestError('Invalid credentials');
     }
 
     const authObjectId: ObjectId = new ObjectId();
@@ -94,7 +94,7 @@ export class Signup {
 
     // Add cached to redis
     const userDateCache: IUserDocument = Signup.prototype.userData(authData, userObjectId);
-    userDateCache.profilePicture = `https://res.cloudinary.com/${config.CLOUD_NAME}/image/upload/${result.version}/${userObjectId}`;
+    userDateCache.profilePicture = `https://res.cloudinary.com/${config.CLOUD_NAME}/image/upload/v${result.version}/${userObjectId}`;
     await userCache.saveUserToCached(`${userObjectId}`, uId, userDateCache);
 
     res.status(HTTP_STATUS.CREATED).json({ message: 'User created successfully', authData });
