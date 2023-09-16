@@ -1,3 +1,4 @@
+import { IUserDocument } from '@user/interfaces/user.interface';
 import HTTP_STATUS from 'http-status-codes';
 import { IAuthDocument, ISignUpData } from '@auth/interfaces/auth.interface';
 import { signupSchema } from '@auth/schemes/signup';
@@ -9,7 +10,10 @@ import { authService } from '@service/db/auth.service';
 import { UploadApiResponse } from 'cloudinary';
 import { Request, Response } from 'express';
 import { ObjectId } from 'mongodb';
+import { UserCache } from '@service/redis/user.cache';
+import { config } from '@root/config';
 
+const userCache: UserCache = new UserCache();
 export class Signup {
   private signupData(data: ISignUpData): IAuthDocument {
     const { _id, uId, email, username, password, avatarColor } = data;
@@ -24,6 +28,44 @@ export class Signup {
     } as IAuthDocument;
   }
 
+  private userData(data: IAuthDocument, userObjectId: ObjectId): IUserDocument {
+    const { _id, username, email, uId, password, avatarColor } = data;
+    return {
+      _id: userObjectId,
+      authId: _id,
+      uId,
+      username: Helpers.firstLetterUppercase(username),
+      email,
+      password,
+      avatarColor,
+      profilePicture: '',
+      blocked: [],
+      blockedBy: [],
+      work: '',
+      location: '',
+      school: '',
+      quote: '',
+      bgImageVersion: '',
+      bgImageId: '',
+      followersCount: 0,
+      followingCount: 0,
+      postsCount: 0,
+      notifications: {
+        messages: true,
+        reactions: true,
+        comments: true,
+        follows: true,
+      },
+      social: {
+        facebook: '',
+        instagram: '',
+        twitter: '',
+        youtube: '',
+      },
+    } as unknown as IUserDocument;
+  }
+
+  // User Create ---------------------------------------------------------------
   @joiValidation(signupSchema)
   public async create(req: Request, res: Response): Promise<void> {
     const { username, email, password, avatarColor, avatarImage } = req.body;
@@ -49,6 +91,11 @@ export class Signup {
     if (!result.public_id) {
       throw new BadRequestError('File Upload: Error occured. Try again..');
     }
+
+    // Add cached to redis
+    const userDateCache: IUserDocument = Signup.prototype.userData(authData, userObjectId);
+    userDateCache.profilePicture = `https://res.cloudinary.com/${config.CLOUD_NAME}/image/upload/${result.version}/${userObjectId}`;
+    await userCache.saveUserToCached(`${userObjectId}`, uId, userDateCache);
 
     res.status(HTTP_STATUS.CREATED).json({ message: 'User created successfully', authData });
   }
