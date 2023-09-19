@@ -27,13 +27,13 @@ export class Signin {
       throw new BadRequestError('Invalid credentials');
     }
 
-    // const user: IUserDocument = await userService.getUserByAuthId(`${existingUser.id}`);
-    // console.log('USER: ', user);
+    // get user data(from Users, not from auth)
+    const user: IUserDocument = await userService.getUserByAuthId(`${existingUser._id}`);
 
     // JWT
     const userJWTToken: string = JWT.sign(
       {
-        userId: existingUser.id,
+        userId: user.id,
         uid: existingUser.uId,
         email: existingUser.email,
         username: existingUser.username,
@@ -43,6 +43,16 @@ export class Signin {
     );
     req.session = { jwt: userJWTToken };
 
-    res.status(HTTP_STATUS.OK).json({ message: 'User Login successfully', user: existingUser, token: userJWTToken });
+    const userDocument: IUserDocument = {
+      ...user,
+      authId: existingUser!._id,
+      username: existingUser!.username,
+      email: existingUser!.email,
+      avatarColor: existingUser!.avatarColor,
+      uId: existingUser!.uId,
+      createdAt: existingUser!.createdAt,
+    } as IUserDocument;
+
+    res.status(HTTP_STATUS.OK).json({ message: 'User Login successfully', user: userDocument, token: userJWTToken });
   }
 }

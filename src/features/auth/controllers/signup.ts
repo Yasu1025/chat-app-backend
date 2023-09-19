@@ -3,7 +3,6 @@ import { UploadApiResponse } from 'cloudinary';
 import { Request, Response } from 'express';
 import { ObjectId } from 'mongodb';
 import JWT from 'jsonwebtoken';
-import { omit } from 'lodash';
 import { joiValidation } from '@global/decorators/joi-validation.decorators';
 import { upload } from '@global/helpers/cloudinary-upload';
 import { BadRequestError } from '@global/helpers/error-handler';
@@ -121,8 +120,7 @@ export class Signup {
     await userCache.saveUserToCached(`${userObjectId}`, uId, userDateForCache);
 
     // Add cached to mongoDB
-    omit(userDateForCache, ['uid', 'username', 'email', 'avatarColor', 'password']);
-    authQueue.addAuthUserJob('addAuthUserJobToDB', { value: userDateForCache }); // save to /Auth
+    authQueue.addAuthUserJob('addAuthUserJobToDB', { value: authData }); // save to /Auth
     userQueue.addUserJob('addUserJobToDB', { value: userDateForCache }); // save to /User
 
     // JWT
