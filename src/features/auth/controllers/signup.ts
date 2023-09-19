@@ -1,20 +1,21 @@
-import { authQueue } from '../../../shared/services/queues/auth.queue';
-import { IUserDocument } from '@user/interfaces/user.interface';
 import HTTP_STATUS from 'http-status-codes';
-import { IAuthDocument, ISignUpData } from '@auth/interfaces/auth.interface';
-import { signupSchema } from '@auth/schemes/signup';
+import { UploadApiResponse } from 'cloudinary';
+import { Request, Response } from 'express';
+import { ObjectId } from 'mongodb';
+import JWT from 'jsonwebtoken';
+import { omit } from 'lodash';
 import { joiValidation } from '@global/decorators/joi-validation.decorators';
 import { upload } from '@global/helpers/cloudinary-upload';
 import { BadRequestError } from '@global/helpers/error-handler';
 import { Helpers } from '@global/helpers/helpers';
-import { authService } from '@service/db/auth.service';
-import { UploadApiResponse } from 'cloudinary';
-import { Request, Response } from 'express';
-import { ObjectId } from 'mongodb';
-import { UserCache } from '@service/redis/user.cache';
 import { config } from '@root/config';
-import { omit } from 'lodash';
+import { IUserDocument } from '@user/interfaces/user.interface';
+import { IAuthDocument, ISignUpData } from '@auth/interfaces/auth.interface';
+import { signupSchema } from '@auth/schemes/signup';
+import { authService } from '@service/db/auth.service';
+import { UserCache } from '@service/redis/user.cache';
 import { userQueue } from '@service/queues/user.queue';
+import { authQueue } from '@service/queues/auth.queue';
 
 const userCache: UserCache = new UserCache();
 export class Signup {
@@ -68,6 +69,19 @@ export class Signup {
     } as unknown as IUserDocument;
   }
 
+  private signToken(data: IAuthDocument, userObjectId: ObjectId): string {
+    return JWT.sign(
+      {
+        userId: userObjectId,
+        uid: data.uId,
+        email: data.email,
+        username: data.username,
+        avatarColor: data.avatarColor,
+      },
+      config.JWT_TOKEN!
+    );
+  }
+
   // User Create ---------------------------------------------------------------
   @joiValidation(signupSchema)
   public async create(req: Request, res: Response): Promise<void> {
@@ -96,15 +110,21 @@ export class Signup {
     }
 
     // Add cached to redis
-    const userDateCache: IUserDocument = Signup.prototype.userData(authData, userObjectId);
-    userDateCache.profilePicture = `https://res.cloudinary.com/${config.CLOUD_NAME}/image/upload/v${result.version}/${userObjectId}`;
-    await userCache.saveUserToCached(`${userObjectId}`, uId, userDateCache);
+    const userDateForCache: IUserDocument = Signup.prototype.userData(authData, userObjectId);
+    userDateForCache.profilePicture = `https://res.cloudinary.com/${config.CLOUD_NAME}/image/upload/v${result.version}/${userObjectId}`;
+    await userCache.saveUserToCached(`${userObjectId}`, uId, userDateForCache);
 
     // Add cached to DB
-    omit(userDateCache, ['uid', 'username', 'email', 'avatarColor', 'password']);
-    authQueue.addAuthUserJob('addAuthUserJobToDB', { value: userDateCache }); // save to /Auth
-    userQueue.addUserJob('addUserJobToDB', { value: userDateCache }); // save to /User
+    omit(userDateForCache, ['uid', 'username', 'email', 'avatarColor', 'password']);
+    authQueue.addAuthUserJob('addAuthUserJobToDB', { value: userDateForCache }); // save to /Auth
+    userQueue.addUserJob('addUserJobToDB', { value: userDateForCache }); // save to /User
 
-    res.status(HTTP_STATUS.CREATED).json({ message: 'User created successfully', authData });
+    // JWT
+    const userJWTToken: string = Signup.prototype.signToken(authData, userObjectId);
+    req.session = { jwt: userJWTToken };
+
+    res
+      .status(HTTP_STATUS.CREATED)
+      .json({ message: 'User created successfully', user: userDateForCache, token: userJWTToken });
   }
 }
