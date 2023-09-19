@@ -18,6 +18,7 @@ import { userQueue } from '@service/queues/user.queue';
 import { authQueue } from '@service/queues/auth.queue';
 
 const userCache: UserCache = new UserCache();
+
 export class Signup {
   private signupData(data: ISignUpData): IAuthDocument {
     const { _id, uId, email, username, password, avatarColor } = data;
@@ -86,14 +87,19 @@ export class Signup {
   @joiValidation(signupSchema)
   public async create(req: Request, res: Response): Promise<void> {
     const { username, email, password, avatarColor, avatarImage } = req.body;
+
+    // check User already exist
     const checkUserExist: IAuthDocument = await authService.getUserByUsernameOrEmail(username, email);
     if (checkUserExist) {
       throw new BadRequestError('Invalid credentials');
     }
 
+    // generate some IDs
     const authObjectId: ObjectId = new ObjectId();
     const userObjectId: ObjectId = new ObjectId();
     const uId = `${Helpers.generateRandomIntegers(12)}`;
+
+    // Format and create auth Data
     const authData: IAuthDocument = Signup.prototype.signupData({
       _id: authObjectId,
       uId,
@@ -114,7 +120,7 @@ export class Signup {
     userDateForCache.profilePicture = `https://res.cloudinary.com/${config.CLOUD_NAME}/image/upload/v${result.version}/${userObjectId}`;
     await userCache.saveUserToCached(`${userObjectId}`, uId, userDateForCache);
 
-    // Add cached to DB
+    // Add cached to mongoDB
     omit(userDateForCache, ['uid', 'username', 'email', 'avatarColor', 'password']);
     authQueue.addAuthUserJob('addAuthUserJobToDB', { value: userDateForCache }); // save to /Auth
     userQueue.addUserJob('addUserJobToDB', { value: userDateForCache }); // save to /User
